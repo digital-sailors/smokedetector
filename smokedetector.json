@@ -1,0 +1,33 @@
+{
+  "description": "This file is used by smokedetector. smokedetector allows you to quickly check that the most important urls on a website work.",
+  "servers": {
+    "live": {
+      "host": "www.digital-sailors.de"
+    },
+    "test": {
+      "host": "test.digital-sailors.work",
+      "disableHttps": true
+    }
+  },
+  "urlspace": {
+    "http": {
+      "/": {
+        "expectedStatus": 200,
+        "status": 200
+      }
+    },
+    "https": {
+      "/": {
+        "expectedStatus": 200,
+        "status": 200
+      },
+      "/robots.txt": {
+        "status": 200,
+        "expectedStatus": 200
+      }
+    }
+  },
+  "result": {
+    "Succeeded": 3
+  }
+}
