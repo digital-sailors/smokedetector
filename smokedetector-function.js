@@ -18,26 +18,41 @@
 
 const R = require('ramda');
 const fetch = require('node-fetch');
+var URL = require('url').URL;
 
 exports.handler = async function(event, context, callback) {
-  const description = {
-    description: 'This file is used by smokedetector. smokedetector allows you to quickly check that the most important urls on a website work.'
-  };
 
-  const config = R.merge(description, R.omit([ 'description' ], event.config));
-
+  const config = event.config;
+  
   const hostSelector = event.hostSelector || R.keys(config.servers)[0];
   const host = config.servers[hostSelector].host;
   const disableHttps = config.servers[hostSelector].disableHttps;
 
   console.log('Testing', host);
 
-  config.urlspace.http = await checkProtocol('http://', host, config.urlspace.http || {});
-  config.urlspace.https = await checkProtocol(disableHttps ? 'http://' : 'https://', host, config.urlspace.https || {});
 
-  const httpResult = evaluateResult('http://', host, config.urlspace.http || {});
-  const httpsResult = evaluateResult(disableHttps ? 'http://' : 'https://', host, config.urlspace.https || {});
-  config.result = R.mergeWith(R.add, httpResult, httpsResult);
+  if (disableHttps) {
+    // prefer https uris (remove http uris from check that have an https equivalent)
+    const httpURIs = config.urlspace.https ? R.keys(config.urlspace.https) : [];
+    const httpUrlspace = R.omit(httpURIs, config.urlspace.http || {});
+
+    const httpCheckResult = await checkProtocol('http://', host, httpUrlspace);
+    config.urlspace.http = R.merge(config.urlspace.http, httpCheckResult);
+
+    const httpsCheckResult = await checkProtocol('http://', host, config.urlspace.https || {});
+    config.urlspace.https = R.merge(config.urlspace.https, httpsCheckResult);
+
+    const httpResult = evaluateResult('http://', host, httpUrlspace);
+    const httpsResult = evaluateResult('http://', host, config.urlspace.https || {});
+    config.result = R.mergeWith(R.add, httpResult, httpsResult);
+  } else {
+    config.urlspace.http = await checkProtocol('http://', host, config.urlspace.http || {});
+    config.urlspace.https = await checkProtocol('https://', host, config.urlspace.https || {});
+
+    const httpResult = evaluateResult('http://', host, config.urlspace.http || {});
+    const httpsResult = evaluateResult('https://', host, config.urlspace.https || {});
+    config.result = R.mergeWith(R.add, httpResult, httpsResult);    
+  }
 
   console.log(config.result);
 
@@ -51,9 +66,14 @@ function evaluateResult(protocol, host, urlspace) {
 
 function evaluateURL(protocol, host, config, url) {
   if (config.expectedStatus == config.status) {
-    return true;
+    if (config.expectedLocationURI == config.locationURI) {
+      return true;
+    } else {
+      console.error(`${protocol}${host}${url}: Status: ${config.status} [Expected location: ${config.expectedLocationURI}] Location: ${config.locationURI}`);
+      return false;
+      }
   } else {
-    console.error(`${protocol}${host}${url}: [Expected: ${config.expectedStatus}] Status: ${config.status}`);
+    console.error(`${protocol}${host}${url}: [Expected status: ${config.expectedStatus}] Status: ${config.status}`);
     return false;
   }
 }
@@ -66,10 +86,25 @@ async function checkProtocol(protocol, host, urlspace) {
 }
 
 async function checkURL(protocol, host, config, url) {
-  const response = await fetch(protocol + host + url);
+  const response = await fetch(protocol + host + url, { redirect: 'manual' });
+
+  // status
+  config.status = response.status;
   if (!config.expectedStatus) {
     config.expectedStatus = response.status;
   }
-  config.status = response.status;
+
+  // location header, if present
+  const location = response.headers.get('location');
+  if (location) {
+    // TODO check host
+    const locationUrl = new URL(location);
+    const relativeURI = `${locationUrl.pathname}${locationUrl.search}${locationUrl.hash}`;
+    config.locationURI = relativeURI;
+    if (!config.expectedLocationURI) {
+      config.expectedLocationURI = relativeURI;
+    }
+  }
+
   return R.objOf(url, config);
 }
