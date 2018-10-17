@@ -43,18 +43,17 @@ exports.handler = async function(event, context, callback) {
 
     const httpResult = evaluateResult('http://', host, httpUrlspace);
     const httpsResult = evaluateResult('http://', host, config.urlspace.https || {});
-    config.result = R.mergeWith(R.add, httpResult, httpsResult);
+    config.result[hostSelector] = R.mergeWith(R.add, httpResult, httpsResult);
   } else {
     config.urlspace.http = await checkProtocol('http://', host, config.urlspace.http || {});
     config.urlspace.https = await checkProtocol('https://', host, config.urlspace.https || {});
 
     const httpResult = evaluateResult('http://', host, config.urlspace.http || {});
     const httpsResult = evaluateResult('https://', host, config.urlspace.https || {});
-    config.result = {};
     config.result[hostSelector] = R.mergeWith(R.add, httpResult, httpsResult);    
   }
 
-  console.log(config.result);
+  console.log(config.result[hostSelector]);
 
   callback(config);
 }

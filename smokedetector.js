@@ -18,6 +18,11 @@
   limitations under the License.
 */
 
+/*
+  NOTES:
+  npx ~/GitHub/smokedetector/smokedetector.js
+*/
+
 const R = require('ramda');
 const fs = require('fs');
 
