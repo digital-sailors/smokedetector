@@ -4,7 +4,9 @@
   "description": "a simple smoke test utility for websites",
   "main": "smokedetector.js",
   "repository": "github:digital-sailors/smokedetector",
-  "scripts": {},
+  "scripts": {
+    "smokedetector": "./smokedetector.js"
+  },
   "bin": {
     "smokedetector": "./smokedetector.js"
   },

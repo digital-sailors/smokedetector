@@ -30,7 +30,6 @@ exports.handler = async function(event, context, callback) {
 
   console.log('Testing', host);
 
-
   if (disableHttps) {
     // prefer https uris (remove http uris from check that have an https equivalent)
     const httpURIs = config.urlspace.https ? R.keys(config.urlspace.https) : [];
@@ -51,7 +50,8 @@ exports.handler = async function(event, context, callback) {
 
     const httpResult = evaluateResult('http://', host, config.urlspace.http || {});
     const httpsResult = evaluateResult('https://', host, config.urlspace.https || {});
-    config.result = R.mergeWith(R.add, httpResult, httpsResult);    
+    config.result = {};
+    config.result[hostSelector] = R.mergeWith(R.add, httpResult, httpsResult);    
   }
 
   console.log(config.result);
