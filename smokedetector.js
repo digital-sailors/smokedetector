@@ -111,7 +111,7 @@ try {
   });  
 } catch (e) {
   if (e.errno == -2) {
-    console.log('You have no smokedetector.json file, create one by running: npm smokedetector --init');
+    console.log('You have no smokedetector.json file, create one by running: npx smokedetector --init');
   } else {
     console.log(e);
   }
