@@ -23,7 +23,7 @@ Preliminary configuration is kept to an absolute minimum. You have to provide
 To start using smokedetector in a project, run:
 
 ```
-npx smokedetector init
+npx smokedetector --init
 ```
 
 Optional: add more URLs to the file `smokedetector.json`.
@@ -66,7 +66,7 @@ This is an example of the configuration file:
 }
 ```
 
-It is created when you run `npx smokedetector init`. You can add any number of URLs, ones that should work with https:// and ones that work with http://
+It is created when you run `npx smokedetector --init`. You can add any number of URLs, ones that should work with https:// and ones that work with http://
 
 When you run smokedetector, it records the responses in this file. The file is considered diff-aware, i.e. changes happen when something significant changed. If you find this file modified without reason, that probably means that a smoke test gave a different result than the one that was expected.
 

@@ -25,14 +25,48 @@
 
 const R = require('ramda');
 const fs = require('fs');
+const commandLineArgs = require('command-line-args');
+const commandLineUsage = require('command-line-usage');
 
 const smokedetector = require('./smokedetector-function.js');
 
 const descriptionText = 'This configuration is used by smokedetector. smokedetector allows you to quickly check that the most important urls on a website work. Learn more at https://github.com/digital-sailors/smokedetector';
 
-if (process.argv[2] == 'init') {
-  if (fs.existsSync('smokedetector.json')) {
-    console.log('File smokedetector.json already exists. Not overwriting this file');
+const optionDefinitions = [
+  { name: 'environment', type: String, defaultOption: true, typeLabel: '{underline environment}', description: 'The environment to use. Default: The first configured environment' },
+  { name: 'file', alias: 'f', type: String, defaultValue: 'smokedetector.json', typeLabel: '{underline file}', description: 'The configuration file to use. Default: smokedetector.json' },
+  { name: 'init', type: Boolean, description: 'Creates an empty configuration file.' },
+  { name: 'help', alias: 'h', type: Boolean, description: 'Print this usage guide.' }
+];
+
+const options = commandLineArgs(optionDefinitions);
+
+if (options.help) {
+  const sections = [
+    {
+      header: 'Smokedetector',
+      content: 'A simple smoke test utility for websites.'
+    },
+    {
+      header: 'Synopsis',
+      content: [
+        '$ npx smokedetector',
+        '$ npx smokedetector [{bold --file} {underline file}] [[{bold --environment}] {underline environment}]',
+        '$ npx smokedetector {bold --init}',
+        '$ npx smokedetector {bold --help}',
+      ]
+    },
+    {
+      header: 'Options',
+      optionList: optionDefinitions
+    }
+  ]
+  const usage = commandLineUsage(sections)
+  console.log(usage)
+  return;
+} else if (options.init) {
+  if (fs.existsSync(options.file)) {
+    console.log(`File ${options.file} already exists. Not overwriting this file`);
     return;
   } else {
     const config = {
@@ -54,16 +88,16 @@ if (process.argv[2] == 'init') {
       }
     };
 
-    fs.writeFileSync('smokedetector.json', JSON.stringify(config, null, 2));
+    fs.writeFileSync(options.file, JSON.stringify(config, null, 2));
     return;
   }
 }
 
 try {
-  const smokedetectorConfigFile = fs.readFileSync('smokedetector.json');
+  const smokedetectorConfigFile = fs.readFileSync(options.file);
   const event = {
     config: JSON.parse(smokedetectorConfigFile),
-    hostSelector: process.argv[2]
+    hostSelector: options.environment
   }
   
   smokedetector.handler(event, null, r => {
@@ -73,11 +107,11 @@ try {
   
     const config = R.merge(description, R.omit([ 'description' ], r));
   
-    fs.writeFileSync('smokedetector.json', JSON.stringify(config, null, 2));
+    fs.writeFileSync(options.file, JSON.stringify(config, null, 2));
   });  
 } catch (e) {
   if (e.errno == -2) {
-    console.log('You have no smokedetector.json file, create one by running: npm smokedetector init');
+    console.log('You have no smokedetector.json file, create one by running: npm smokedetector --init');
   } else {
     console.log(e);
   }

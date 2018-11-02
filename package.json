@@ -17,6 +17,8 @@
     "url": "https://www.digital-sailors.de"
   },
   "dependencies": {
+    "command-line-args": "^5.0.2",
+    "command-line-usage": "^5.0.5",
     "node-fetch": "^2.2.0",
     "ramda": "^0.25.0"
   }
