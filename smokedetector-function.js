@@ -43,6 +43,8 @@ exports.handler = async function(event, context, callback) {
 
     const httpResult = evaluateResult('http://', host, httpUrlspace);
     const httpsResult = evaluateResult('http://', host, config.urlspace.https || {});
+
+    config.result = config.result || {};
     config.result[hostSelector] = R.mergeWith(R.add, httpResult, httpsResult);
   } else {
     config.urlspace.http = await checkProtocol('http://', host, config.urlspace.http || {});
@@ -50,6 +52,8 @@ exports.handler = async function(event, context, callback) {
 
     const httpResult = evaluateResult('http://', host, config.urlspace.http || {});
     const httpsResult = evaluateResult('https://', host, config.urlspace.https || {});
+    
+    config.result = config.result || {};
     config.result[hostSelector] = R.mergeWith(R.add, httpResult, httpsResult);    
   }
 
