@@ -36,7 +36,7 @@ const optionDefinitions = [
   { name: 'environment', type: String, defaultOption: true, typeLabel: '{underline environment}', description: 'The environment to use. Default: The first configured environment' },
   { name: 'file', alias: 'f', type: String, defaultValue: 'smokedetector.json', typeLabel: '{underline file}', description: 'The configuration file to use. Default: smokedetector.json' },
   { name: 'init', type: Boolean, description: 'Creates an empty configuration file.' },
-  XXX { name: 'refresh', type: Boolean, description: 'Discards all previous results and records new expected values for all urls' },
+  /* { name: 'refresh', type: Boolean, description: 'Discards all previous results and records new expected values for all urls' }, */
   { name: 'help', alias: 'h', type: Boolean, description: 'Print this usage guide.' }
 ];
 
@@ -101,16 +101,16 @@ try {
     config: JSON.parse(smokedetectorConfigFile),
     hostSelector: options.environment
   }
-  
+
   smokedetector.handler(event, null, r => {
     const description = {
       description: descriptionText
     };
-  
+
     const config = R.merge(description, R.omit([ 'description' ], r));
-  
+
     fs.writeFileSync(options.file, JSON.stringify(config, null, 2));
-  });  
+  });
 } catch (e) {
   if (e.errno == -2) {
     console.log('You have no smokedetector.json file, create one by running: npx smokedetector --init');
