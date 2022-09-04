@@ -35,10 +35,10 @@ exports.handler = async function(event, context, callback) {
     const httpURIs = config.urlspace.https ? R.keys(config.urlspace.https) : [];
     const httpUrlspace = R.omit(httpURIs, config.urlspace.http || {});
 
-    const httpCheckResult = await checkProtocol('http://', host, httpUrlspace);
+    const httpCheckResult = await checkProtocol('http://', host, httpUrlspace, event.verbose);
     config.urlspace.http = R.merge(config.urlspace.http, httpCheckResult);
 
-    const httpsCheckResult = await checkProtocol('http://', host, config.urlspace.https || {});
+    const httpsCheckResult = await checkProtocol('http://', host, config.urlspace.https || {}, event.verbose);
     config.urlspace.https = R.merge(config.urlspace.https, httpsCheckResult);
 
     const httpResult = evaluateResult('http://', host, httpUrlspace);
@@ -47,8 +47,8 @@ exports.handler = async function(event, context, callback) {
     config.result = config.result || {};
     config.result[hostSelector] = R.mergeWith(R.add, httpResult, httpsResult);
   } else {
-    config.urlspace.http = await checkProtocol('http://', host, config.urlspace.http || {});
-    config.urlspace.https = await checkProtocol('https://', host, config.urlspace.https || {});
+    config.urlspace.http = await checkProtocol('http://', host, config.urlspace.http || {}, event.verbose);
+    config.urlspace.https = await checkProtocol('https://', host, config.urlspace.https || {}, event.verbose);
 
     const httpResult = evaluateResult('http://', host, config.urlspace.http || {});
     const httpsResult = evaluateResult('https://', host, config.urlspace.https || {});
@@ -81,18 +81,25 @@ function evaluateURL(protocol, host, config, url) {
   }
 }
 
-async function checkProtocol(protocol, host, urlspace) {
-  const checkHost = R.partial(checkURL) ([ protocol, host ]);
+async function checkProtocol(protocol, host, urlspace, verbose) {
+  const checkHost = R.partial(checkURL) ([ protocol, host, verbose ]);
   const resultPromises = R.compose(R.values, R.mapObjIndexed(checkHost)) (urlspace);
-  const urlResults = await Promise.all(resultPromises);
-  return R.mergeAll(urlResults);
+  const urlResults = await Promise.allSettled(resultPromises);
+  return R.mergeAll(R.pluck('value', urlResults));  // maybe check status of promises?  { status: 'fulfilled' }
 }
 
-async function checkURL(protocol, host, config, url) {
-  const response = await fetch(protocol + host + url, { redirect: 'manual' });
+async function checkURL(protocol, host, verbose, config, url) {
+  const finalUrl = protocol + host + url;
+  if (verbose) {
+    console.log('Checking URL:', finalUrl);
+  }
+  const response = await fetch(finalUrl, { redirect: 'manual' });
 
   // status
   config.status = response.status;
+  if (verbose) {
+    console.log(`Got status ${config.status} for URL:`, finalUrl);
+  }
   if (!config.expectedStatus) {
     config.expectedStatus = response.status;
   }

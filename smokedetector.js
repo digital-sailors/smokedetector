@@ -36,6 +36,7 @@ const optionDefinitions = [
   { name: 'environment', type: String, defaultOption: true, typeLabel: '{underline environment}', description: 'The environment to use. Default: The first configured environment' },
   { name: 'file', alias: 'f', type: String, defaultValue: 'smokedetector.json', typeLabel: '{underline file}', description: 'The configuration file to use. Default: smokedetector.json' },
   { name: 'init', type: Boolean, description: 'Creates an empty configuration file.' },
+  { name: 'verbose', alias: 'v', type: Boolean, description: 'Verbose output' },
   /* { name: 'refresh', type: Boolean, description: 'Discards all previous results and records new expected values for all urls' }, */
   { name: 'help', alias: 'h', type: Boolean, description: 'Print this usage guide.' }
 ];
@@ -54,7 +55,7 @@ if (options.help) {
         '$ npx smokedetector',
         '$ npx smokedetector [{bold --file} {underline file}] [[{bold --environment}] {underline environment}]',
         '$ npx smokedetector {bold --init}',
-        '$ npx smokedetector {bold --refresh}',
+        /* '$ npx smokedetector {bold --refresh}', */
         '$ npx smokedetector {bold --help}',
       ]
     },
@@ -99,7 +100,8 @@ try {
   const smokedetectorConfigFile = fs.readFileSync(options.file);
   const event = {
     config: JSON.parse(smokedetectorConfigFile),
-    hostSelector: options.environment
+    hostSelector: options.environment,
+    verbose: options.verbose
   }
 
   smokedetector.handler(event, null, r => {
