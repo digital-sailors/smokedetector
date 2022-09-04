@@ -1,6 +1,6 @@
 {
   "name": "smokedetector",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "a simple smoke test utility for websites",
   "main": "smokedetector.js",
   "repository": "github:digital-sailors/smokedetector",
